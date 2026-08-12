@@ -202,7 +202,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin-top: 30px;
         }
 
-        @media (max-width: 767px) {
+        @media (max-width: 500px) {
 
             .login-brand {
                 min-height: auto;
@@ -238,40 +238,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <div class="login-brand">
 
-                    <div class="brand-logo">
-                        IST
-                    </div>
 
-                    <h1>
-                        Seleksi Insan<br>
-                        Statistik Teladan
-                    </h1>
+    <img
+        src="../assets/logo_bps.png"
+        alt="Logo Badan Pusat Statistik"
+        class="login-brand-logo"
+    >
 
-                    <p>
-                        Sistem pengelolaan dan rekapitulasi
-                        penilaian pegawai Kabupaten Madiun.
-                    </p>
+    <h1>
+        Badan Pusat Statistik Kabupaten Madiun<br>
+    </h1>
 
-                    <div class="brand-info">
+    <p>
+        Sistem pengelolaan dan rekapitulasi
+        penilaian pegawai Kabupaten Madiun
+    </p>
 
-                        <div>
-                            <i class="bi bi-shield-check"></i>
-                            <span>Akses khusus administrator</span>
-                        </div>
+    <div class="brand-info">
 
-                        <div>
-                            <i class="bi bi-bar-chart-line"></i>
-                            <span>Monitoring hasil penilaian</span>
-                        </div>
 
-                        <div>
-                            <i class="bi bi-people"></i>
-                            <span>Rekapitulasi data polling</span>
-                        </div>
+        <div>
+            <i class="bi bi-shield-check"></i>
+            <span>Akses khusus administrator</span>
+        </div>
 
-                    </div>
 
-                </div>
+        <div>
+            <i class="bi bi-bar-chart-line"></i>
+            <span>Monitoring hasil penilaian</span>
+        </div>
+
+
+        <div>
+            <i class="bi bi-people"></i>
+            <span>Rekapitulasi data polling</span>
+        </div>
+    </div>
+</div>
 
             </div>
 
@@ -302,7 +305,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </h2>
 
                     <p class="login-subtitle text-center">
-                        Silakan masuk ke halaman administrator.
+                        Silakan masuk ke halaman administrator
                     </p>
 
 
