@@ -237,40 +237,38 @@ $totalIndicatorCandidate = count($byIndicator);
 
         <div class="d-flex gap-2">
 
-
             <!-- Lihat Form -->
-
             <a
                 class="btn btn-outline-secondary"
                 href="../index.php"
             >
-
                 <i class="bi bi-arrow-left me-1"></i>
-
                 Lihat Form
-
             </a>
 
+            <!-- Export CSV -->
+            <a
+                class="btn btn-success"
+                href="export_csv.php"
+            >
+                <i class="bi bi-file-earmark-spreadsheet me-1"></i>
+                Export CSV
+            </a>
 
             <!-- Hitung Pemenang -->
-
             <button
                 type="button"
                 class="btn btn-primary"
                 data-bs-toggle="modal"
                 data-bs-target="#modalHitungPemenang"
             >
-
                 <i class="bi bi-trophy me-1"></i>
-
                 Hitung Pemenang
-
             </button>
 
         </div>
 
     </div>
-
 
 
     <!-- =================================================
