@@ -575,6 +575,37 @@ while ($row = $result->fetch_assoc()) {
 </div>
 
 <!-- =====================================================
+     MODAL SUDAH PERNAH MENGISI (DUPLIKAT NIP)
+===================================================== -->
+<div
+    class="modal fade"
+    id="duplicateSubmitModal"
+    tabindex="-1"
+    aria-labelledby="duplicateSubmitModalLabel"
+    aria-hidden="true"
+>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center py-4">
+                <i class="bi bi-exclamation-octagon-fill text-danger" style="font-size:3rem;"></i>
+                <h5 class="mt-3 mb-1" id="duplicateSubmitModalLabel">
+                    NIP Ini Sudah Pernah Mengisi Penilaian
+                </h5>
+                <p class="text-muted mb-0">
+                    Setiap staf hanya dapat memberikan penilaian satu kali.
+                    Jika Anda merasa ini keliru, silakan hubungi admin.
+                </p>
+            </div>
+            <div class="modal-footer justify-content-center border-0 pt-0">
+                <a href="index.php" class="btn btn-outline-danger">
+                    Tutup
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- =====================================================
      BOOTSTRAP JS
 ===================================================== -->
 
@@ -674,6 +705,25 @@ document.addEventListener(
         const successModal =
             new bootstrap.Modal(
                 successModalElement
+            );
+
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | MODAL SUDAH PERNAH MENGISI (DUPLIKAT NIP)
+        |--------------------------------------------------------------------------
+        */
+
+        const duplicateModalElement =
+            document.getElementById(
+                'duplicateSubmitModal'
+            );
+
+
+        const duplicateModal =
+            new bootstrap.Modal(
+                duplicateModalElement
             );
 
 
@@ -1164,18 +1214,62 @@ document.addEventListener(
 
             /*
             |--------------------------------------------------------------------------
-            | TAMPILKAN POPUP
+            | TAMPILKAN POPUP SUKSES
             |--------------------------------------------------------------------------
             */
 
             successModal.show();
 
 
+            window.history.replaceState(
+                {},
+                document.title,
+                window.location.pathname
+            );
+
+        } else if (
+            status === 'duplicate'
+        ) {
+
+
             /*
             |--------------------------------------------------------------------------
-            | HAPUS STATUS DARI URL
+            | TAMPILKAN POPUP SUDAH PERNAH MENGISI
             |--------------------------------------------------------------------------
             */
+
+            duplicateModal.show();
+
+
+            window.history.replaceState(
+                {},
+                document.title,
+                window.location.pathname
+            );
+
+        } else if (
+            status === 'error'
+        ) {
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | TAMPILKAN ALERT JIKA GAGAL DISIMPAN DI SERVER
+            |--------------------------------------------------------------------------
+            */
+
+            validationAlertText.textContent =
+                'Terjadi kesalahan saat menyimpan data. ' +
+                'Silakan periksa kembali isian Anda dan coba kirim ulang.';
+
+            validationAlert.classList.add(
+                'show'
+            );
+
+            validationAlert.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
 
             window.history.replaceState(
                 {},

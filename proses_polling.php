@@ -1,4 +1,5 @@
 <?php
+
 require_once "config/database.php";
 
 /*
@@ -11,6 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+
 /*
 |--------------------------------------------------------------------------
 | Mengambil data penilai
@@ -19,6 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $nama = trim($_POST['nama_penilai'] ?? '');
 $nip  = trim($_POST['nip'] ?? '');
 
+
 /*
 |--------------------------------------------------------------------------
 | Mengambil catatan tambahan
@@ -26,14 +29,39 @@ $nip  = trim($_POST['nip'] ?? '');
 */
 $catatan_tambahan = trim($_POST['catatan_tambahan'] ?? '');
 
+
 /*
 |--------------------------------------------------------------------------
 | Validasi nama dan NIP
 |--------------------------------------------------------------------------
 */
 if ($nama === '' || $nip === '') {
-    die("Nama dan NIP/ID Pegawai wajib diisi.");
+    header("Location: index.php?status=error");
+    exit;
 }
+
+
+/*
+|--------------------------------------------------------------------------
+| Validasi panjang nama
+|--------------------------------------------------------------------------
+*/
+if (strlen($nama) > 120) {
+    header("Location: index.php?status=error");
+    exit;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Validasi panjang NIP
+|--------------------------------------------------------------------------
+*/
+if (strlen($nip) > 50) {
+    header("Location: index.php?status=error");
+    exit;
+}
+
 
 /*
 |--------------------------------------------------------------------------
@@ -41,16 +69,24 @@ if ($nama === '' || $nip === '') {
 |--------------------------------------------------------------------------
 */
 if (strlen($catatan_tambahan) > 2000) {
-    die("Catatan tambahan terlalu panjang. Maksimal 2000 karakter.");
+    header("Location: index.php?status=error");
+    exit;
 }
+
+
 /*
 |--------------------------------------------------------------------------
 | Validasi apakah NIP sudah pernah memberikan penilaian
 |--------------------------------------------------------------------------
 */
 $check = $conn->prepare(
-    "SELECT id FROM polls WHERE nip = ?"
+    "SELECT id FROM polls WHERE nip = ? LIMIT 1"
 );
+
+if (!$check) {
+    header("Location: index.php?status=error");
+    exit;
+}
 
 $check->bind_param(
     "s",
@@ -60,67 +96,27 @@ $check->bind_param(
 $check->execute();
 $check->store_result();
 
+
+/*
+|--------------------------------------------------------------------------
+| Jika NIP sudah pernah mengisi
+|--------------------------------------------------------------------------
+*/
 if ($check->num_rows > 0) {
+
     $check->close();
-    die('
-    <!doctype html>
-    <html lang="id">
-    <head>
-        <meta charset="utf-8">
-        <meta
-            name="viewport"
-            content="width=device-width, initial-scale=1"
-        >
-        <title>Penilaian Sudah Tercatat</title>
-        <link
-            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-            rel="stylesheet"
-        >
-        <link
-            href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
-            rel="stylesheet"
-        >
-        <link
-            href="assets/style.css"
-            rel="stylesheet"
-        >
-    </head>
-    <body class="notice-page">
-        <div class="notice-wrapper">
-            <div class="notice-card">
-                <div class="notice-icon">
-                    <i class="bi bi-check-circle-fill"></i>
-                </div>
-                <h1>
-                    Penilaian Sudah Tercatat
-                </h1>
-                <p>
-                    NIP / ID Pegawai yang Anda masukkan
-                    sudah pernah memberikan penilaian
-                </p>
-                <div class="notice-info">
-                    <i class="bi bi-info-circle me-1"></i>
-                    Setiap pegawai hanya dapat
-                    memberikan penilaian satu kali
-                </div>
-                <a
-                    href="index.php"
-                    class="btn btn-primary px-4 py-2 notice-button"
-                >
-                    <i class="bi bi-arrow-left me-1"></i>
-                    Kembali ke Form
-                </a>
-                <div class="notice-brand">
-                    Sistem Polling IST Kabupaten Madiun
-                </div>
-            </div>
-        </div>
-    </body>
-    </html>
-    ');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Kembali ke index.php dan tampilkan modal duplicate
+    |--------------------------------------------------------------------------
+    */
+    header("Location: index.php?status=duplicate");
+    exit;
 }
 
 $check->close();
+
 
 /*
 |--------------------------------------------------------------------------
@@ -128,13 +124,21 @@ $check->close();
 |--------------------------------------------------------------------------
 */
 $candidates = [];
+
 $result = $conn->query(
     "SELECT id FROM candidates ORDER BY id"
 );
 
-while ($row = $result->fetch_assoc()) {
-    $candidates[] = (int)$row['id'];
+if (!$result) {
+    header("Location: index.php?status=error");
+    exit;
 }
+
+while ($row = $result->fetch_assoc()) {
+    $candidates[] = (int) $row['id'];
+}
+
+$result->free();
 
 
 /*
@@ -143,13 +147,31 @@ while ($row = $result->fetch_assoc()) {
 |--------------------------------------------------------------------------
 */
 $indicators = [];
+
 $result = $conn->query(
     "SELECT id FROM indicators ORDER BY id"
 );
 
-while ($row = $result->fetch_assoc()) {
-    $indicators[] = (int)$row['id'];
+if (!$result) {
+    header("Location: index.php?status=error");
+    exit;
+}
 
+while ($row = $result->fetch_assoc()) {
+    $indicators[] = (int) $row['id'];
+}
+
+$result->free();
+
+
+/*
+|--------------------------------------------------------------------------
+| Pastikan kandidat dan indikator tersedia
+|--------------------------------------------------------------------------
+*/
+if (empty($candidates) || empty($indicators)) {
+    header("Location: index.php?status=error");
+    exit;
 }
 
 
@@ -158,44 +180,75 @@ while ($row = $result->fetch_assoc()) {
 | Mengambil semua nilai penilaian
 |--------------------------------------------------------------------------
 */
-
 $ratings = [];
 
 foreach ($candidates as $candidateId) {
+
     foreach ($indicators as $indicatorId) {
-        $key =
-            "nilai_{$candidateId}_{$indicatorId}";
-        $value = filter_input(
-            INPUT_POST,
-            $key,
-            FILTER_VALIDATE_INT
-        );
 
         /*
-        |--------------------------------------------------------------
-        | Setiap indikator wajib memiliki nilai 1 sampai 5
-        |--------------------------------------------------------------
+        |--------------------------------------------------------------------------
+        | Nama field sesuai dengan index.php
+        |--------------------------------------------------------------------------
+        |
+        | Contoh:
+        | nilai_1_1
+        | nilai_1_2
+        | nilai_2_1
+        |
+        |--------------------------------------------------------------------------
         */
-       if (
-    $value === false ||
-    $value === null ||
-    $value < 1 ||
-    $value > 5
-) {
-    die(
-        "Semua indikator wajib dinilai dengan skor 1 sampai 5."
-    );
-}
+        $key = "nilai_{$candidateId}_{$indicatorId}";
 
 
+        /*
+        |--------------------------------------------------------------------------
+        | Ambil nilai POST
+        |--------------------------------------------------------------------------
+        */
+        $rawValue = $_POST[$key] ?? null;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Validasi nilai
+        |--------------------------------------------------------------------------
+        */
+        if (
+            $rawValue === null ||
+            !is_scalar($rawValue) ||
+            !ctype_digit((string) $rawValue)
+        ) {
+            header("Location: index.php?status=error");
+            exit;
+        }
+
+
+        $value = (int) $rawValue;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Nilai harus 1 sampai 5
+        |--------------------------------------------------------------------------
+        */
+        if ($value < 1 || $value > 5) {
+            header("Location: index.php?status=error");
+            exit;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Simpan ke array ratings
+        |--------------------------------------------------------------------------
+        */
         $ratings[] = [
             $candidateId,
             $indicatorId,
             $value
         ];
-
     }
-
 }
 
 
@@ -206,7 +259,9 @@ foreach ($candidates as $candidateId) {
 */
 $conn->begin_transaction();
 
+
 try {
+
     /*
     |--------------------------------------------------------------------------
     | 1. MENYIMPAN IDENTITAS + CATATAN KE TABEL POLLS
@@ -220,9 +275,15 @@ try {
             catatan_tambahan
         )
         VALUES
-        ( ?, ?, ?
-        )
+        (?, ?, ?)
     ");
+
+    if (!$stmt) {
+        throw new Exception(
+            "Gagal menyiapkan query polls."
+        );
+    }
+
 
     $stmt->bind_param(
         "sss",
@@ -231,18 +292,33 @@ try {
         $catatan_tambahan
     );
 
-    $stmt->execute();
 
     /*
+    |--------------------------------------------------------------------------
+    | Eksekusi INSERT polls
+    |--------------------------------------------------------------------------
+    */
+    if (!$stmt->execute()) {
+        throw new Exception(
+            "Gagal menyimpan data penilai."
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
     | ID poll yang baru dibuat
+    |--------------------------------------------------------------------------
     */
     $pollId = $conn->insert_id;
+
+
     $stmt->close();
 
 
     /*
     |--------------------------------------------------------------------------
-    | 2. MENIYIMPAN SEMUA NILAI KE TABEL RATINGS
+    | 2. MENYIMPAN SEMUA NILAI KE TABEL RATINGS
     |--------------------------------------------------------------------------
     */
     $stmt = $conn->prepare("
@@ -254,14 +330,27 @@ try {
             score
         )
         VALUES
-        (?,?,?,?
-        )
+        (?, ?, ?, ?)
     ");
 
+
+    if (!$stmt) {
+        throw new Exception(
+            "Gagal menyiapkan query ratings."
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Simpan setiap nilai
+    |--------------------------------------------------------------------------
+    */
     foreach (
         $ratings
         as [$candidateId, $indicatorId, $score]
     ) {
+
         $stmt->bind_param(
             "iiii",
             $pollId,
@@ -269,40 +358,59 @@ try {
             $indicatorId,
             $score
         );
-        $stmt->execute();
+
+
+        if (!$stmt->execute()) {
+            throw new Exception(
+                "Gagal menyimpan nilai penilaian."
+            );
+        }
     }
+
 
     $stmt->close();
 
+
     /*
     |--------------------------------------------------------------------------
-    | 3. SEMUA BERHASIL
+    | 3. SEMUA DATA BERHASIL DISIMPAN
     |--------------------------------------------------------------------------
     */
     $conn->commit();
 
+
     /*
     |--------------------------------------------------------------------------
-    | 4. Menuju ke halaman sukses
+    | 4. KEMBALI KE INDEX DAN TAMPILKAN MODAL SUKSES
     |--------------------------------------------------------------------------
     */
     header(
-        "Location: index.php"
+        "Location: index.php?status=success"
     );
 
     exit;
+
+
 } catch (Throwable $e) {
 
     /*
     |--------------------------------------------------------------------------
-    | Jika ada error, batalkan semuanya
+    | Jika terjadi error, batalkan semua perubahan
     |--------------------------------------------------------------------------
     */
     $conn->rollback();
-    die(
-        "Gagal menyimpan penilaian. Silakan coba lagi."
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Kembali ke index dan tampilkan pesan error
+    |--------------------------------------------------------------------------
+    */
+    header(
+        "Location: index.php?status=error"
     );
 
+    exit;
 }
 
 ?>
