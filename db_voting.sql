@@ -1,7 +1,7 @@
-CREATE DATABASE IF NOT EXISTS polling_ist
+CREATE DATABASE IF NOT EXISTS db_voting
 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-USE polling_ist;
+USE db_voting;
 
 CREATE TABLE candidates (
     id INT AUTO_INCREMENT PRIMARY KEY,
